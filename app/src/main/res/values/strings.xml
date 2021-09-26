@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">KazanExpressTask</string>
+    <string name="my_wallets">My Wallets</string>
+    <string name="history">History</string>
+    <string name="check_internet_connection">Проверьте свое подключение к интернету</string>
+    <string name="too_many_requests">Слишком много вызовов</string>
+</resources>
