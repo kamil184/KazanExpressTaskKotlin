@@ -9,12 +9,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.kamil184.kazanexpresstaskkotlin.R
 import com.kamil184.kazanexpresstaskkotlin.adapters.HistoryAdapter
 import com.kamil184.kazanexpresstaskkotlin.adapters.WalletsAdapter
+import com.kamil184.kazanexpresstaskkotlin.databinding.ActivityMainBinding
 import com.kamil184.kazanexpresstaskkotlin.models.TransactionsList
 import com.kamil184.kazanexpresstaskkotlin.models.WalletsList
 
@@ -22,8 +23,8 @@ import com.kamil184.kazanexpresstaskkotlin.models.WalletsList
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
 
-    private lateinit var walletsList: WalletsList
-    private lateinit var transactionsList: TransactionsList
+    private var walletsList: WalletsList? = null
+    private var transactionsList: TransactionsList? = null
 
     private lateinit var walletsAdapter: WalletsAdapter
     private lateinit var historyAdapter: HistoryAdapter
@@ -32,38 +33,33 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionsRecycler: RecyclerView
     private lateinit var transactionPlaceholders: LinearLayout
     private lateinit var walletPlaceholders: LinearLayout
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var walletError: TextView
     private lateinit var transactionError: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        walletsRecycler = findViewById<View>(R.id.wallets) as RecyclerView
-        transactionsRecycler = findViewById<View>(R.id.transactions) as RecyclerView
-        transactionPlaceholders = findViewById<View>(R.id.transaction_placeholders) as LinearLayout
-        walletPlaceholders = findViewById<View>(R.id.wallet_placeholders) as LinearLayout
-        swipeRefreshLayout = findViewById<View>(R.id.swipe_refresh_layout) as SwipeRefreshLayout
-        walletError = findViewById<View>(R.id.wallet_error_text) as TextView
-        transactionError = findViewById<View>(R.id.transaction_error_text) as TextView
-        swipeRefreshLayout.setColorSchemeColors(
+        val binding: ActivityMainBinding =
+            DataBindingUtil.setContentView(this, R.layout.activity_main)
+        walletsRecycler = binding.wallets
+        transactionsRecycler = binding.transactions
+        transactionPlaceholders = binding.transactionPlaceholders
+        walletPlaceholders = binding.walletPlaceholders
+        walletError = binding.walletErrorText
+        transactionError = binding.transactionErrorText
+
+        binding.swipeRefreshLayout.setColorSchemeColors(
             ContextCompat.getColor(
                 this,
                 R.color.design_default_color_primary
             )
         )
 
-        swipeRefreshLayout.setOnRefreshListener {
-            setWallets()
-            setTransactions()
-        }
-
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         viewModel.onWalletsError = {
             Log.e(MainActivity::class.java.simpleName, it)
             Handler(Looper.getMainLooper()).postDelayed({
-                swipeRefreshLayout.isRefreshing = false
+                viewModel.setRefreshing(false)
                 walletError.text = getString(R.string.check_internet_connection)
                 walletPlaceholders.visibility = View.GONE
                 walletsRecycler.visibility = View.GONE
@@ -74,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         viewModel.onTransactionsError = {
             Log.e(MainActivity::class.java.simpleName, it)
             Handler(Looper.getMainLooper()).postDelayed({
-                swipeRefreshLayout.isRefreshing = false
+                viewModel.setRefreshing(false)
                 transactionError.text = getString(R.string.check_internet_connection)
                 transactionPlaceholders.visibility = View.GONE
                 transactionsRecycler.visibility = View.GONE
@@ -82,12 +78,21 @@ class MainActivity : AppCompatActivity() {
             }, 300)
         }
 
+        viewModel.onRefreshListener = {
+            setWallets()
+            setTransactions()
+        }
+
+        binding.viewModel = viewModel
+
         viewModel.fetchWallets()
         viewModel.fetchTransactions()
 
-        viewModel.walletsLiveData.observe(this, {
+        walletsAdapter = WalletsAdapter(walletsList)
+        walletsRecycler.adapter = walletsAdapter
 
-            swipeRefreshLayout.isRefreshing = false
+        viewModel.walletsLiveData.observe(this, {
+            viewModel.setRefreshing(false)
 
             if (it.isSuccessful) {
                 walletPlaceholders.visibility = View.GONE
@@ -95,8 +100,7 @@ class MainActivity : AppCompatActivity() {
                 walletError.visibility = View.GONE
 
                 walletsList = it.body()!!
-                walletsAdapter = WalletsAdapter(walletsList)
-                walletsRecycler.adapter = walletsAdapter
+                walletsAdapter.wallets = walletsList
                 walletsAdapter.notifyDataSetChanged()
             } else if (it.code() == 429) {
                 walletError.text = getString(R.string.too_many_requests)
@@ -106,8 +110,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        historyAdapter = HistoryAdapter(transactionsList)
+        transactionsRecycler.adapter = historyAdapter
+
         viewModel.transactionsLiveData.observe(this, {
-            swipeRefreshLayout.isRefreshing = false
+            viewModel.setRefreshing(false)
 
             if (it.isSuccessful) {
                 transactionPlaceholders.visibility = View.GONE
@@ -115,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                 transactionError.visibility = View.GONE
 
                 transactionsList = it.body()!!
-                historyAdapter = HistoryAdapter(transactionsList)
+                historyAdapter.transactionsList = transactionsList
                 transactionsRecycler.adapter = historyAdapter
                 historyAdapter.notifyDataSetChanged()
             } else if (it.code() == 429) {

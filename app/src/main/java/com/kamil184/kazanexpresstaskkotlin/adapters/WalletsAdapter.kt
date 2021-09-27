@@ -1,39 +1,38 @@
 package com.kamil184.kazanexpresstaskkotlin.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-
+import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.kamil184.kazanexpresstaskkotlin.R
+import com.kamil184.kazanexpresstaskkotlin.databinding.WalletBinding
+import com.kamil184.kazanexpresstaskkotlin.models.Wallet
 import com.kamil184.kazanexpresstaskkotlin.models.WalletsList
 
-
-class WalletsAdapter(private val wallets: WalletsList) :
+class WalletsAdapter(var wallets: WalletsList?) :
     RecyclerView.Adapter<WalletsAdapter.ViewHolder>() {
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view: View = LayoutInflater.from(parent.context).inflate(R.layout.wallet, parent, false)
-        return ViewHolder(view)
+        val inflater = LayoutInflater.from(parent.context)
+        val binding: WalletBinding =
+            DataBindingUtil.inflate(inflater, R.layout.wallet, parent, false)
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val wallet = wallets.wallets[position]
-        holder.name.text = wallet.name
-        holder.balance.text = wallet.getFormattedBalanceText()
+        holder.bind(wallets!!.wallets[position])
     }
 
     override fun getItemCount(): Int {
-        return wallets.wallets.size
+        if(wallets == null) return 0
+        return wallets!!.wallets.size
     }
 
-    class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
-        val name: TextView
-        val balance: TextView
+    class ViewHolder(private val binding: WalletBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        init {
-            name = view.findViewById(R.id.wallet_name)
-            balance = view.findViewById(R.id.wallet_balance)
+        fun bind(wallet: Wallet) {
+            binding.wallet = wallet
+            binding.executePendingBindings()
         }
     }
 }
