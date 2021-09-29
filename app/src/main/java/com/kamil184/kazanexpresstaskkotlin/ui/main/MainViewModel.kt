@@ -17,16 +17,16 @@ class MainViewModel : ViewModel() {
     private val coroutineContext: CoroutineContext
         get() = Job() + Dispatchers.IO
 
-    lateinit var onWalletsError: ((String) -> Unit)
+    var onWalletsError: ((String) -> Unit)? = null
 
     private val walletsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        onWalletsError.invoke(throwable.localizedMessage!!)
+        onWalletsError?.invoke(throwable.localizedMessage!!)
     }
 
-    lateinit var onTransactionsError: ((String) -> Unit)
+    var onTransactionsError: ((String) -> Unit)? = null
 
     private val transactionsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        onTransactionsError.invoke(throwable.localizedMessage!!)
+        onTransactionsError?.invoke(throwable.localizedMessage!!)
     }
 
     val walletsLiveData = MutableLiveData<Response<WalletsList>>()
@@ -49,11 +49,11 @@ class MainViewModel : ViewModel() {
 
     var isRefreshing = ObservableBoolean()
 
-    lateinit var onRefreshListener: (() -> Unit)
+    var onRefreshListener: (() -> Unit)? = null
 
     fun onRefresh() {
         isRefreshing.set(true)
-        onRefreshListener.invoke()
+        onRefreshListener?.invoke()
     }
 
     fun setRefreshing(isRefreshing: Boolean) = this.isRefreshing.set(isRefreshing)

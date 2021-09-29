@@ -21,20 +21,20 @@ import com.kamil184.kazanexpresstaskkotlin.models.WalletsList
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var viewModel: MainViewModel
+    private var viewModel: MainViewModel? = null
 
     private var walletsList: WalletsList? = null
     private var transactionsList: TransactionsList? = null
 
-    private lateinit var walletsAdapter: WalletsAdapter
-    private lateinit var historyAdapter: HistoryAdapter
+    private var walletsAdapter: WalletsAdapter? = null
+    private var historyAdapter: HistoryAdapter? = null
 
-    private lateinit var walletsRecycler: RecyclerView
-    private lateinit var transactionsRecycler: RecyclerView
-    private lateinit var transactionPlaceholders: LinearLayout
-    private lateinit var walletPlaceholders: LinearLayout
-    private lateinit var walletError: TextView
-    private lateinit var transactionError: TextView
+    private var walletsRecycler: RecyclerView? = null
+    private var transactionsRecycler: RecyclerView? = null
+    private var transactionPlaceholders: LinearLayout? = null
+    private var walletPlaceholders: LinearLayout? = null
+    private var walletError: TextView? = null
+    private var transactionError: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,98 +56,98 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        viewModel.onWalletsError = {
+        viewModel!!.onWalletsError = {
             Log.e(MainActivity::class.java.simpleName, it)
             Handler(Looper.getMainLooper()).postDelayed({
-                viewModel.setRefreshing(false)
-                walletError.text = getString(R.string.check_internet_connection)
-                walletPlaceholders.visibility = View.GONE
-                walletsRecycler.visibility = View.GONE
-                walletError.visibility = View.VISIBLE
+                viewModel!!.setRefreshing(false)
+                walletError!!.text = getString(R.string.check_internet_connection)
+                walletPlaceholders!!.visibility = View.GONE
+                walletsRecycler!!.visibility = View.GONE
+                walletError!!.visibility = View.VISIBLE
             }, 300)
         }
 
-        viewModel.onTransactionsError = {
+        viewModel!!.onTransactionsError = {
             Log.e(MainActivity::class.java.simpleName, it)
             Handler(Looper.getMainLooper()).postDelayed({
-                viewModel.setRefreshing(false)
-                transactionError.text = getString(R.string.check_internet_connection)
-                transactionPlaceholders.visibility = View.GONE
-                transactionsRecycler.visibility = View.GONE
-                transactionError.visibility = View.VISIBLE
+                viewModel!!.setRefreshing(false)
+                transactionError!!.text = getString(R.string.check_internet_connection)
+                transactionPlaceholders!!.visibility = View.GONE
+                transactionsRecycler!!.visibility = View.GONE
+                transactionError!!.visibility = View.VISIBLE
             }, 300)
         }
 
-        viewModel.onRefreshListener = {
+        viewModel!!.onRefreshListener = {
             setWallets()
             setTransactions()
         }
 
         binding.viewModel = viewModel
 
-        viewModel.fetchWallets()
-        viewModel.fetchTransactions()
+        viewModel!!.fetchWallets()
+        viewModel!!.fetchTransactions()
 
         walletsAdapter = WalletsAdapter(walletsList)
-        walletsRecycler.adapter = walletsAdapter
+        walletsRecycler!!.adapter = walletsAdapter
 
-        viewModel.walletsLiveData.observe(this, {
-            viewModel.setRefreshing(false)
+        viewModel!!.walletsLiveData.observe(this, {
+            viewModel!!.setRefreshing(false)
 
             if (it.isSuccessful) {
-                walletPlaceholders.visibility = View.GONE
-                walletsRecycler.visibility = View.VISIBLE
-                walletError.visibility = View.GONE
+                walletPlaceholders!!.visibility = View.GONE
+                walletsRecycler!!.visibility = View.VISIBLE
+                walletError!!.visibility = View.GONE
 
                 walletsList = it.body()!!
-                walletsAdapter.wallets = walletsList
-                walletsAdapter.notifyDataSetChanged()
+                walletsAdapter!!.wallets = walletsList
+                walletsAdapter!!.notifyDataSetChanged()
             } else if (it.code() == 429) {
-                walletError.text = getString(R.string.too_many_requests)
-                walletPlaceholders.visibility = View.GONE
-                walletsRecycler.visibility = View.GONE
-                walletError.visibility = View.VISIBLE
+                walletError!!.text = getString(R.string.too_many_requests)
+                walletPlaceholders!!.visibility = View.GONE
+                walletsRecycler!!.visibility = View.GONE
+                walletError!!.visibility = View.VISIBLE
             }
         })
 
         historyAdapter = HistoryAdapter(transactionsList)
-        transactionsRecycler.adapter = historyAdapter
+        transactionsRecycler!!.adapter = historyAdapter
 
-        viewModel.transactionsLiveData.observe(this, {
-            viewModel.setRefreshing(false)
+        viewModel!!.transactionsLiveData.observe(this, {
+            viewModel!!.setRefreshing(false)
 
             if (it.isSuccessful) {
-                transactionPlaceholders.visibility = View.GONE
-                transactionsRecycler.visibility = View.VISIBLE
-                transactionError.visibility = View.GONE
+                transactionPlaceholders!!.visibility = View.GONE
+                transactionsRecycler!!.visibility = View.VISIBLE
+                transactionError!!.visibility = View.GONE
 
                 transactionsList = it.body()!!
-                historyAdapter.transactionsList = transactionsList
-                transactionsRecycler.adapter = historyAdapter
-                historyAdapter.notifyDataSetChanged()
+                historyAdapter!!.transactionsList = transactionsList
+                transactionsRecycler!!.adapter = historyAdapter
+                historyAdapter!!.notifyDataSetChanged()
             } else if (it.code() == 429) {
-                transactionError.text = getString(R.string.too_many_requests)
-                transactionPlaceholders.visibility = View.GONE
-                transactionsRecycler.visibility = View.GONE
-                transactionError.visibility = View.VISIBLE
+                transactionError!!.text = getString(R.string.too_many_requests)
+                transactionPlaceholders!!.visibility = View.GONE
+                transactionsRecycler!!.visibility = View.GONE
+                transactionError!!.visibility = View.VISIBLE
             }
         })
     }
 
     private fun setWallets() {
-        walletPlaceholders.visibility = View.VISIBLE
-        walletsRecycler.visibility = View.GONE
-        walletError.visibility = View.GONE
+        walletPlaceholders?.visibility = View.VISIBLE
+        walletsRecycler?.visibility = View.GONE
+        walletError?.visibility = View.GONE
 
-        viewModel.fetchWallets()
+        viewModel?.fetchWallets()
     }
 
     private fun setTransactions() {
-        transactionPlaceholders.visibility = View.VISIBLE
-        transactionsRecycler.visibility = View.GONE
-        transactionError.visibility = View.GONE
+        transactionPlaceholders?.visibility = View.VISIBLE
+        transactionsRecycler?.visibility = View.GONE
+        transactionError?.visibility = View.GONE
 
-        viewModel.fetchTransactions()
+        viewModel?.fetchTransactions()
     }
 
 }
